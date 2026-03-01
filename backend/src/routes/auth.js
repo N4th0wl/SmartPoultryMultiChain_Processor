@@ -199,4 +199,43 @@ router.get('/me', authMiddleware, async (req, res) => {
     }
 });
 
+// PUT /api/auth/me
+router.put('/me', authMiddleware, async (req, res) => {
+    const t = await sequelize.transaction();
+    try {
+        const { namaProcessor } = req.body;
+        if (!namaProcessor) {
+            await t.rollback();
+            return res.status(400).json({ message: 'Nama tidak boleh kosong.' });
+        }
+
+        const user = await User.findByPk(req.user.id);
+        if (!user) {
+            await t.rollback();
+            return res.status(404).json({ message: 'User tidak ditemukan.' });
+        }
+
+        // Update Karyawan record if it exists
+        const karyawan = await Karyawan.findOne({ where: { IdUser: user.IdUser } });
+        if (karyawan) {
+            await karyawan.update({ NamaLengkap: namaProcessor }, { transaction: t });
+        }
+
+        // Update Processor record if applicable and user is ADMIN
+        if (user.Role === 'ADMIN' && user.IdProcessor) {
+            const processor = await Processor.findByPk(user.IdProcessor);
+            if (processor) {
+                await processor.update({ NamaProcessor: namaProcessor }, { transaction: t });
+            }
+        }
+
+        await t.commit();
+        res.json({ message: 'Profil berhasil diperbarui.', nama: namaProcessor });
+    } catch (error) {
+        await t.rollback();
+        console.error('Update me error:', error);
+        res.status(500).json({ message: 'Gagal memperbarui profil.' });
+    }
+});
+
 module.exports = router;

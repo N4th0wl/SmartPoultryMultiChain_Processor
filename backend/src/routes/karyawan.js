@@ -41,8 +41,8 @@ router.post('/', authMiddleware, adminOnly, async (req, res) => {
 
         const user = await User.create({
             KodeUser: kodeUser,
+            IdProcessor: req.user.idProcessor,
             Email: email,
-            NamaProcessor: namaLengkap,
             Password: hashedPassword,
             Role: 'KARYAWAN',
         }, { transaction: t });
@@ -51,6 +51,7 @@ router.post('/', authMiddleware, adminOnly, async (req, res) => {
         const karyawan = await Karyawan.create({
             KodeKaryawan: kodeKaryawan,
             IdUser: user.IdUser,
+            IdProcessor: req.user.idProcessor,
             NamaLengkap: namaLengkap,
             Jabatan: jabatan,
             NoTelp: noTelp || null,

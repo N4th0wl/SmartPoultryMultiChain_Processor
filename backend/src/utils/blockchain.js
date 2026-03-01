@@ -75,15 +75,22 @@ async function createBlock(sequelize, { idIdentity, idOrder, idProduksi, tipeBlo
     const queryOpts = {};
     if (transaction) queryOpts.transaction = transaction;
 
+    const [identityResult] = await sequelize.query(
+        `SELECT IdProcessor FROM blockchainidentity WHERE IdIdentity = :idIdentity LIMIT 1`,
+        { ...queryOpts, replacements: { idIdentity } }
+    );
+    const idProcessor = identityResult && identityResult.length > 0 ? identityResult[0].IdProcessor : null;
+
     await sequelize.query(
         `INSERT INTO ledger_processor 
-         (KodeBlock, IdIdentity, IdOrder, IdProduksi, TipeBlock, BlockIndex, PreviousHash, CurrentHash, DataPayload, Nonce, StatusBlock, CreatedAt, ValidatedAt) 
-         VALUES (:kodeBlock, :idIdentity, :idOrder, :idProduksi, :tipeBlock, :blockIndex, :previousHash, :currentHash, :dataPayload, :nonce, 'VALIDATED', NOW(), NOW())`,
+         (KodeBlock, IdIdentity, IdProcessor, IdOrder, IdProduksi, TipeBlock, BlockIndex, PreviousHash, CurrentHash, DataPayload, Nonce, StatusBlock, CreatedAt, ValidatedAt) 
+         VALUES (:kodeBlock, :idIdentity, :idProcessor, :idOrder, :idProduksi, :tipeBlock, :blockIndex, :previousHash, :currentHash, :dataPayload, :nonce, 'VALIDATED', NOW(), NOW())`,
         {
             ...queryOpts,
             replacements: {
                 kodeBlock,
                 idIdentity,
+                idProcessor,
                 idOrder: idOrder || null,
                 idProduksi: idProduksi || null,
                 tipeBlock,

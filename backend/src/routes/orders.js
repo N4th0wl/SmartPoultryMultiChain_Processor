@@ -9,7 +9,7 @@ const { authMiddleware, adminOnly } = require('../middlewares/auth');
 router.get('/', authMiddleware, async (req, res) => {
     try {
         const orders = await Order.findAll({
-            include: [{ model: User, as: 'pembuat', attributes: ['KodeUser', 'NamaProcessor'] }],
+            include: [{ model: User, as: 'pembuat', attributes: ['KodeUser', 'Email'] }],
             order: [['CreatedAt', 'DESC']],
         });
         res.json({ data: orders });
@@ -23,7 +23,7 @@ router.get('/', authMiddleware, async (req, res) => {
 router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const order = await Order.findByPk(req.params.id, {
-            include: [{ model: User, as: 'pembuat', attributes: ['KodeUser', 'NamaProcessor'] }],
+            include: [{ model: User, as: 'pembuat', attributes: ['KodeUser', 'Email'] }],
         });
         if (!order) return res.status(404).json({ message: 'Order tidak ditemukan.' });
         res.json({ data: order });
@@ -53,6 +53,7 @@ router.post('/', authMiddleware, adminOnly, async (req, res) => {
 
         const order = await Order.create({
             KodeOrder: kodeOrder,
+            IdProcessor: req.user.idProcessor,
             NamaPeternakan: namaPeternakan,
             AlamatPeternakan: alamatPeternakan || null,
             KontakPeternakan: kontakPeternakan || null,
@@ -167,6 +168,7 @@ router.put('/:id/terima', authMiddleware, async (req, res) => {
         const identity = await BlockchainIdentity.create({
             KodeIdentity: kodeIdentity,
             IdOrder: order.IdOrder,
+            IdProcessor: req.user.idProcessor,
             KodePeternakan: kodePeternakan || null,
             KodeCycleFarm: kodeCycleFarm || null,
             FarmLastBlockHash: farmLastBlockHash || null,
